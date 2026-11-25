@@ -900,6 +900,7 @@
       const ribbonMesh = new THREE.Mesh(ribbonGeo, new THREE.MeshStandardMaterial({
         map: strapTex, roughness: 0.78, metalness: 0.05, side: THREE.DoubleSide
       }));
+      ribbonMesh.frustumCulled = false;
       badgeRoot.add(ribbonMesh);
 
       function screenToWorld(clientX, clientY, targetZ = 0) {
@@ -1024,9 +1025,14 @@
         if (startGrab(e.clientX, e.clientY)) e.preventDefault();
       });
       window.addEventListener('mousemove', (e) => {
-        if (dragging) moveGrab(e.clientX, e.clientY);
-        else document.body.classList.toggle('badge-hover', hitTest(e.clientX, e.clientY).length > 0);
+        if (dragging) {
+          if (e.buttons === 0) { endDrag(); return; }
+          moveGrab(e.clientX, e.clientY);
+        } else {
+          document.body.classList.toggle('badge-hover', hitTest(e.clientX, e.clientY).length > 0);
+        }
       });
+      document.addEventListener('mouseleave', endDrag);
       window.addEventListener('mouseup', endDrag);
 
       // Страховка от любых залипаний при потере фокуса, сворачивании вкладки или правом клике
@@ -1045,13 +1051,16 @@
 
       window.addEventListener('touchmove', (e) => {
         if (!dragging) return;
+        let found = false;
         for (let i = 0; i < e.touches.length; i++) {
           if (e.touches[i].identifier === activeTouchId) {
             moveGrab(e.touches[i].clientX, e.touches[i].clientY);
             e.preventDefault();
+            found = true;
             break;
           }
         }
+        if (!found) endDrag();
       }, { passive: false });
 
       window.addEventListener('touchend', endDrag);
@@ -1153,9 +1162,9 @@
               const stretch = dist - restLen;
               tmpDir.copy(cardPos).divideScalar(dist);
               // Плавная нелинейная жёсткость: мягкий возврат при сильном оттягивании, чёткий маятник на номинальной длине
-              const tension = stretch * (52.0 + Math.min(stretch * 14.0, 45.0));
+              const tension = Math.min(stretch * 58.0, 220.0 * sceneScale);
               const radialVel = cardVel.dot(tmpDir);
-              const radialDamp = radialVel * 7.5;
+              const radialDamp = Math.max(-90.0, Math.min(90.0, radialVel * 7.5));
               const totalPull = tension + radialDamp;
               ax -= tmpDir.x * totalPull;
               ay -= tmpDir.y * totalPull;
@@ -1223,6 +1232,18 @@
         const maxYawRate = isFlipping ? 11.0 : 2.6;
         velYaw = Math.max(-maxYawRate, Math.min(maxYawRate, velYaw));
         cardYaw += velYaw * dtSec;
+
+        // Защита от NaN и неконтролируемого вылета за пределы сцены
+        if (
+          !Number.isFinite(cardPos.x) || !Number.isFinite(cardPos.y) || !Number.isFinite(cardPos.z) ||
+          !Number.isFinite(cardVel.x) || !Number.isFinite(cardVel.y) || cardPos.length() > 28 * sceneScale
+        ) {
+          cardPos.set(0, -restLen, 0);
+          cardVel.set(0, 0, 0);
+          midPos.set(0, -restLen * 0.5, 0);
+          midVel.set(0, 0, 0);
+          cardRoll = velRoll = cardPitch = velPitch = velYaw = 0;
+        }
 
         cardPivot.position.copy(cardPos);
         cardPivot.scale.setScalar(sceneScale);
@@ -1602,7 +1623,7 @@
         }
 
         const mapped = repos
-          .filter(r => !r.fork && r.name.toLowerCase() !== PREVIEWS_REPO && !/optovolokno|spectre/i.test(r.name))
+          .filter(r => !r.fork && r.name.toLowerCase() !== PREVIEWS_REPO && r.name.toLowerCase() !== 'portfolio' && !/optovolokno|spectre/i.test(r.name))
           .map(r => {
             const key = r.name.toLowerCase();
             const meta = repoEnrichment[key];
