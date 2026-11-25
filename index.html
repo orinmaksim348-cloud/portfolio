@@ -434,10 +434,16 @@
         <p id="modal-desc" class="mt-2 text-sm leading-relaxed text-[#A8A39B]"></p>
         <div id="modal-stack" class="mt-4 flex flex-wrap gap-2"></div>
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <a id="modal-repo-link" href="https://github.com/orinmaksim348-cloud" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-[#F4F1EC] px-4 py-2 text-xs font-semibold text-[#0E0E11] hover:bg-[#D8B48A] transition-colors">
-            <i data-lucide="github" class="h-4 w-4"></i>
-            <span>Открыть репозиторий</span>
-          </a>
+          <div class="flex flex-wrap items-center gap-2">
+            <a id="modal-live-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center gap-1.5 rounded-xl bg-[#D8B48A] px-4 py-2 text-xs font-semibold text-[#0E0E11] hover:bg-[#e5c59f] transition-colors">
+              <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+              <span>Открыть сайт</span>
+            </a>
+            <a id="modal-repo-link" href="https://github.com/orinmaksim348-cloud" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-[#F4F1EC] px-4 py-2 text-xs font-semibold text-[#0E0E11] hover:bg-[#D8B48A] transition-colors">
+              <i data-lucide="github" class="h-4 w-4"></i>
+              <span>Репозиторий</span>
+            </a>
+          </div>
           <div class="flex items-center gap-2">
             <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-xl border border-[#D8B48A]/35 bg-[#D8B48A]/10 px-4 py-2 text-xs font-semibold text-[#D8B48A] hover:bg-[#D8B48A]/20 transition-colors">
               <span>Хочу похожий</span>
@@ -1492,15 +1498,23 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between border-t border-white/[0.06] px-5 py-3.5 mt-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] px-5 py-3.5 mt-2">
             <button type="button" data-project-id="${item.id}" class="open-project inline-flex items-center gap-1.5 text-xs font-semibold text-[#D8B48A] hover:text-[#F4F1EC] transition-colors">
               <span>${currentLang === 'ru' ? 'Подробнее' : 'Details'}</span>
               <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
             </button>
-            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-[11px] text-[#9C978F] hover:text-[#F4F1EC] transition-colors">
-              <i data-lucide="github" class="h-3.5 w-3.5"></i>
-              <span>GitHub</span>
-            </a>
+            <div class="flex items-center gap-2">
+              ${item.homepage ? `
+                <a href="${item.homepage}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg border border-[#D8B48A]/40 bg-[#D8B48A]/12 px-2.5 py-1 text-[11px] font-semibold text-[#D8B48A] hover:bg-[#D8B48A] hover:text-[#0E0E11] transition-colors">
+                  <span>${currentLang === 'ru' ? 'Сайт' : 'Live'}</span>
+                  <i data-lucide="arrow-up-right" class="h-3 w-3"></i>
+                </a>
+              ` : ''}
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-[11px] text-[#9C978F] hover:text-[#F4F1EC] transition-colors">
+                <i data-lucide="github" class="h-3.5 w-3.5"></i>
+                <span>GitHub</span>
+              </a>
+            </div>
           </div>
         </article>
       `;
@@ -1628,7 +1642,9 @@
             const key = r.name.toLowerCase();
             const meta = repoEnrichment[key];
             const cleanTitle = meta ? meta.title : r.name.replace(/[-_]+/g, ' ').replace(/\w/g, ch => ch.toUpperCase());
-            const liveUrl = (r.homepage && r.homepage.startsWith('http')) ? r.homepage : '';
+            const customHome = (r.homepage && /^https?:\/\//i.test(r.homepage.trim())) ? r.homepage.trim() : '';
+            const ghPagesUrl = r.has_pages ? `https://${GITHUB_USER}.github.io/${r.name}/` : '';
+            const liveUrl = customHome || ghPagesUrl;
             const urls = getPreviewUrls(r.name, previewFolders);
 
             return {
@@ -1706,6 +1722,16 @@
       document.getElementById('modal-title').textContent = proj.title;
       document.getElementById('modal-desc').textContent = proj.desc;
       document.getElementById('modal-repo-link').href = proj.url;
+      const liveBtn = document.getElementById('modal-live-link');
+      if (liveBtn) {
+        if (proj.homepage) {
+          liveBtn.href = proj.homepage;
+          liveBtn.classList.remove('hidden');
+        } else {
+          liveBtn.href = '#';
+          liveBtn.classList.add('hidden');
+        }
+      }
       document.getElementById('modal-preview').innerHTML = `
         <img src="${proj.screenshot}" data-alt="${proj.screenshotAlt || ''}" data-fallback="${proj.fallbackPreview || ''}" data-step="0" alt="${proj.title}" class="h-full w-full object-cover object-top" onerror="if(this.dataset.step==='0' && this.dataset.alt){this.dataset.step='1';this.src=this.dataset.alt;}else if(this.dataset.step!=='2' && this.dataset.fallback){this.dataset.step='2';this.src=this.dataset.fallback;}else{this.style.display='none';}" />
       `;
