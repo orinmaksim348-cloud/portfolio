@@ -185,6 +185,51 @@
     .mobile-flip-back {
       transform: rotateY(180deg);
     }
+    /* Жидкий «капельный» переход (gooey droplet) в плавающем меню */
+    #main-nav {
+      position: relative;
+    }
+    #nav-goo-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      filter: url(#nav-goo-filter);
+      z-index: 0;
+    }
+    .nav-drop {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      left: 0;
+      border-radius: 9999px;
+      background: #F4F1EC;
+      will-change: transform, width;
+    }
+    @media (min-width: 640px) {
+      .nav-drop {
+        top: 6px;
+        bottom: 6px;
+      }
+    }
+    #nav-drop-lead {
+      transition: transform 0.42s cubic-bezier(0.22, 1.24, 0.36, 1), width 0.42s cubic-bezier(0.22, 1.24, 0.36, 1);
+    }
+    #nav-drop-trail {
+      transition: transform 0.62s cubic-bezier(0.25, 0.9, 0.3, 1.15), width 0.62s cubic-bezier(0.25, 0.9, 0.3, 1.15);
+    }
+    .nav-pill {
+      position: relative;
+      z-index: 1;
+      transition: color 0.28s ease;
+    }
+    /* Карусель прайса */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-[#D8B48A]/25 selection:text-[#F4F1EC]">
@@ -204,14 +249,30 @@
   </div>
 
   <!-- Компактная плавающая шапка (ровно в одну строку даже на узких экранах) -->
+  <!-- SVG-фильтр для эффекта жидкой капли в навигации -->
+  <svg width="0" height="0" class="pointer-events-none fixed" aria-hidden="true">
+    <defs>
+      <filter id="nav-goo-filter">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+  </svg>
+
   <header class="fixed bottom-3 left-0 right-0 z-40 flex justify-center px-2 pb-[env(safe-area-inset-bottom)] lg:bottom-auto lg:top-3 lg:px-6 lg:pb-0">
-    <nav class="soft-panel flex max-w-full items-center gap-0.5 rounded-full px-1.5 py-1 shadow-xl shadow-black/40 sm:gap-1.5 sm:px-2.5 sm:py-1.5">
-      <a href="#home" data-nav="home" class="nav-pill whitespace-nowrap rounded-full bg-[#F4F1EC] px-2.5 py-1 text-[11px] font-semibold text-[#0E0E11] transition-colors sm:px-4 sm:py-1.5 sm:text-xs" data-i18n="nav_home">Главная</a>
-      <a href="#about" data-nav="about" class="nav-pill whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] transition-colors sm:px-4 sm:py-1.5 sm:text-xs" data-i18n="nav_about">Обо мне</a>
-      <a href="#portfolio" data-nav="portfolio" class="nav-pill whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] transition-colors sm:px-4 sm:py-1.5 sm:text-xs" data-i18n="nav_portfolio">Портфолио</a>
-      <a href="#contact" data-nav="contact" class="nav-pill whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] transition-colors sm:px-4 sm:py-1.5 sm:text-xs" data-i18n="nav_contact">Контакты</a>
-      <div class="mx-0.5 h-3.5 w-px bg-white/10 sm:mx-1 sm:h-4"></div>
-      <button id="lang-toggle" type="button" class="whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] font-semibold text-[#D8B48A] hover:border-[#D8B48A]/50 transition-colors sm:px-2.5 sm:py-1 sm:text-[11px]" aria-label="Сменить язык">
+    <nav id="main-nav" class="soft-panel flex max-w-full items-center gap-0.5 rounded-full px-1.5 py-1 shadow-xl shadow-black/40 sm:gap-1.5 sm:px-2.5 sm:py-1.5">
+      <div id="nav-goo-layer" aria-hidden="true">
+        <div id="nav-drop-trail" class="nav-drop"></div>
+        <div id="nav-drop-lead" class="nav-drop"></div>
+      </div>
+      <a href="#home" data-nav="home" class="nav-pill whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold text-[#0E0E11] sm:px-3.5 sm:py-1.5 sm:text-xs" data-i18n="nav_home">Главная</a>
+      <a href="#about" data-nav="about" class="nav-pill whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] sm:px-3.5 sm:py-1.5 sm:text-xs" data-i18n="nav_about">Обо мне</a>
+      <a href="#portfolio" data-nav="portfolio" class="nav-pill whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] sm:px-3.5 sm:py-1.5 sm:text-xs" data-i18n="nav_portfolio">Портфолио</a>
+      <a href="#pricing" data-nav="pricing" class="nav-pill whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] sm:px-3.5 sm:py-1.5 sm:text-xs" data-i18n="nav_pricing">Прайс</a>
+      <a href="#contact" data-nav="contact" class="nav-pill whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-medium text-[#A8A39B] hover:text-[#F4F1EC] sm:px-3.5 sm:py-1.5 sm:text-xs" data-i18n="nav_contact">Контакты</a>
+      <div class="relative z-10 mx-0.5 h-3.5 w-px bg-white/10 sm:mx-1 sm:h-4"></div>
+      <button id="lang-toggle" type="button" class="relative z-10 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] font-semibold text-[#D8B48A] hover:border-[#D8B48A]/50 transition-colors sm:px-2.5 sm:py-1 sm:text-[11px]" aria-label="Сменить язык">
         RU
       </button>
     </nav>
@@ -436,6 +497,247 @@
       <div id="tab-content" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
     </section>
 
+    <!-- Секция Прайс (карусель из 4 тарифов с перелистыванием по одному) -->
+    <section id="pricing" class="reveal-section py-12 sm:py-16">
+      <div class="mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row sm:items-end">
+        <div class="text-center sm:text-left">
+          <p class="font-mono text-[11px] uppercase tracking-[0.2em] text-[#D8B48A]" data-i18n="pricing_eyebrow">СТОИМОСТЬ РАБОТЫ</p>
+          <h2 class="mt-2 text-2xl font-bold tracking-tight text-[#F4F1EC] sm:text-4xl" data-i18n="pricing_title">Прайс</h2>
+          <p class="mt-2 max-w-xl text-sm leading-relaxed text-[#A8A39B]" data-i18n="pricing_sub">
+            Понятные форматы разработки под ключ. Листайте тарифы, чтобы выбрать подходящий вариант.
+          </p>
+        </div>
+
+        <!-- Кнопки навигации карусели -->
+        <div class="flex items-center gap-2.5">
+          <span id="pricing-counter" class="mr-1 font-mono text-xs text-[#9C978F]">01 / 05</span>
+          <button id="pricing-prev" type="button" aria-label="Предыдущий тариф" class="soft-card flex h-10 w-10 items-center justify-center rounded-xl text-[#F4F1EC] hover:border-[#D8B48A]/50 hover:text-[#D8B48A] disabled:opacity-35 transition-all">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i>
+          </button>
+          <button id="pricing-next" type="button" aria-label="Следующий тариф" class="soft-card flex h-10 w-10 items-center justify-center rounded-xl text-[#F4F1EC] hover:border-[#D8B48A]/50 hover:text-[#D8B48A] disabled:opacity-35 transition-all">
+            <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- GPU-карусель прайса (плавный translate3d + свайп без лагов) -->
+      <div id="pricing-viewport" class="overflow-hidden pb-2">
+        <div id="pricing-track" class="flex gap-4 will-change-transform sm:gap-5" style="transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1);">
+
+        <!-- Тариф 1: Лендинг / Визитка -->
+        <article class="pricing-slide spotlight-card soft-card flex w-full shrink-0 flex-col justify-between rounded-3xl p-6 sm:w-[78%] md:w-[47%] lg:w-[31.8%]">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-wider text-[#9C978F]">01 / СТАРТ</span>
+              <span class="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 font-mono text-[10px] text-[#C8C3BA]">1–2 дня</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#F4F1EC]">Лендинг / Визитка</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#9C978F]">Компактный одностраничный сайт для презентации услуги, студии или специалиста.</p>
+
+            <div class="mt-5 border-y border-white/[0.07] py-4">
+              <p class="font-mono text-2xl font-extrabold tracking-tight text-[#F4F1EC]">от 10 000 ₽</p>
+              <p class="mt-0.5 text-[11px] text-[#D8B48A]">Личный домен .ru входит в стоимость</p>
+            </div>
+
+            <ul class="mt-5 space-y-2.5">
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Личный домен .ru включён в цену</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Индивидуальный дизайн без шаблонов</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Адаптив под смартфоны и ПК</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Кнопки связи и публикация в сети</span>
+              </li>
+            </ul>
+          </div>
+
+          <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-[#F4F1EC] hover:border-[#D8B48A]/50 hover:text-[#D8B48A] transition-colors">
+            <span>Узнать стоимость</span>
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </a>
+        </article>
+
+        <!-- Тариф 2: Сайт под ключ (акцентный) -->
+        <article class="pricing-slide spotlight-card soft-card relative flex w-full shrink-0 flex-col justify-between rounded-3xl border-[#D8B48A]/35 bg-[#191920] p-6 sm:w-[78%] md:w-[47%] lg:w-[31.8%]">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-wider text-[#D8B48A]">02 / БИЗНЕС</span>
+              <span class="rounded-lg bg-[#D8B48A]/15 px-2.5 py-1 font-mono text-[10px] font-semibold text-[#D8B48A]">2–4 дня • Популярный</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#F4F1EC]">Сайт под ключ</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#9C978F]">Полноценный сайт с каталогом услуг, интерактивными блоками и приёмом заявок.</p>
+
+            <div class="mt-5 border-y border-white/[0.08] py-4">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p class="font-mono text-2xl font-extrabold tracking-tight text-[#D8B48A]">от 15 000 ₽</p>
+                <span class="font-mono text-xs font-medium text-[#A8A39B]">+ 5 000 ₽ за хостинг</span>
+              </div>
+              <p class="mt-1 text-[11px] text-[#D8B48A]">Личный домен .ru входит в стоимость</p>
+            </div>
+
+            <ul class="mt-5 space-y-2.5">
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Личный домен .ru включён в цену</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Каталог, прайс, карты и анимации</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Адаптив под смартфоны и ПК</span>
+              </li>
+            </ul>
+          </div>
+
+          <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#D8B48A] px-4 py-2.5 text-xs font-semibold text-[#0E0E11] hover:bg-[#e5c59f] transition-colors">
+            <span>Обсудить проект</span>
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </a>
+        </article>
+
+        <!-- Тариф 3: Telegram-бот -->
+        <article class="pricing-slide spotlight-card soft-card flex w-full shrink-0 flex-col justify-between rounded-3xl p-6 sm:w-[78%] md:w-[47%] lg:w-[31.8%]">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-wider text-[#9C978F]">03 / TELEGRAM</span>
+              <span class="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 font-mono text-[10px] text-[#C8C3BA]">2–4 дня</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#F4F1EC]">Telegram-бот</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#9C978F]">Бот для автоматического приёма заявок, согласования броней и уведомлений клиентов.</p>
+
+            <div class="mt-5 border-y border-white/[0.07] py-4">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p class="font-mono text-2xl font-extrabold tracking-tight text-[#F4F1EC]">от 5 000 ₽</p>
+                <span class="font-mono text-xs font-medium text-[#A8A39B]">+ 5 000 ₽ за хостинг</span>
+              </div>
+              <p class="mt-1 text-[11px] text-[#7D7870]">Срок реализации: 2–4 дня</p>
+            </div>
+
+            <ul class="mt-5 space-y-2.5">
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Сценарии записи и согласования броней</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Уведомления и панель администратора</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Связка с сайтом при необходимости</span>
+              </li>
+            </ul>
+          </div>
+
+          <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-[#F4F1EC] hover:border-[#D8B48A]/50 hover:text-[#D8B48A] transition-colors">
+            <span>Обсудить бота</span>
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </a>
+        </article>
+
+        <!-- Тариф 4: Веб-приложение / Mini App -->
+        <article class="pricing-slide spotlight-card soft-card flex w-full shrink-0 flex-col justify-between rounded-3xl p-6 sm:w-[78%] md:w-[47%] lg:w-[31.8%]">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-wider text-[#9C978F]">04 / WEB APP</span>
+              <span class="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 font-mono text-[10px] text-[#C8C3BA]">2–4 дня</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#F4F1EC]">Веб-приложение</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#9C978F]">Интерактивный сервис, каталог, калькулятор или Telegram Mini App под задачи вашего бизнеса.</p>
+
+            <div class="mt-5 border-y border-white/[0.07] py-4">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p class="font-mono text-2xl font-extrabold tracking-tight text-[#F4F1EC]">от 8 000 ₽</p>
+                <span class="font-mono text-xs font-medium text-[#A8A39B]">+ 5 000 ₽ за хостинг</span>
+              </div>
+              <p class="mt-1 text-[11px] text-[#7D7870]">Срок реализации: 2–4 дня</p>
+            </div>
+
+            <ul class="mt-5 space-y-2.5">
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Запуск в браузере или внутри Telegram</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Интерактивный интерфейс и логика</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#C8C3BA]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Быстрая работа на телефонах и ПК</span>
+              </li>
+            </ul>
+          </div>
+
+          <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-[#F4F1EC] hover:border-[#D8B48A]/50 hover:text-[#D8B48A] transition-colors">
+            <span>Обсудить приложение</span>
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </a>
+        </article>
+
+        <!-- Тариф 5: Акция Сайт + Telegram-бот (-20%) + хостинг -->
+        <article class="pricing-slide spotlight-card soft-card relative flex w-full shrink-0 flex-col justify-between rounded-3xl border-[#D8B48A]/45 bg-gradient-to-b from-[#1E1C1A] to-[#16161B] p-6 sm:w-[78%] md:w-[47%] lg:w-[31.8%]">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-wider text-[#D8B48A]">05 / АКЦИЯ</span>
+              <span class="rounded-lg bg-[#D8B48A] px-2.5 py-1 font-mono text-[10px] font-bold text-[#0E0E11]">Скидка −20%</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#F4F1EC]">Сайт + Telegram-бот</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#A8A39B]">Выгодный комплект: заказываете сайт и Telegram-бота вместе — получаете скидку 20% на разработку.</p>
+
+            <div class="mt-5 border-y border-[#D8B48A]/20 py-4">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p class="font-mono text-2xl font-extrabold tracking-tight text-[#D8B48A]">−20% на всё</p>
+                <span class="font-mono text-xs font-medium text-[#C8C3BA]">+ 5 000 ₽ хостинг</span>
+              </div>
+              <p class="mt-1 text-[11px] text-[#D8B48A]">Личный домен .ru входит в стоимость</p>
+            </div>
+
+            <ul class="mt-5 space-y-2.5">
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Скидка 20% на комплект Сайт + Бот</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Заявки и брони с сайта сразу в Telegram</span>
+              </li>
+              <li class="flex items-center gap-2 text-xs text-[#E5E0D8]">
+                <i data-lucide="check" class="h-3.5 w-3.5 shrink-0 text-[#D8B48A]"></i>
+                <span>Личный домен .ru + хостинг (+5 000 ₽)</span>
+              </li>
+            </ul>
+          </div>
+
+          <a href="https://t.me/m1lware" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#D8B48A] px-4 py-2.5 text-xs font-semibold text-[#0E0E11] hover:bg-[#e5c59f] transition-colors">
+            <span>Забрать со скидкой −20%</span>
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </a>
+        </article>
+
+        </div>
+      </div>
+
+      <!-- Индикаторы-точки карусели -->
+      <div id="pricing-dots" class="mt-5 flex items-center justify-center gap-2">
+        <button type="button" data-slide="0" aria-label="Тариф 1" class="pricing-dot h-2 w-6 rounded-full bg-[#D8B48A] transition-all"></button>
+        <button type="button" data-slide="1" aria-label="Тариф 2" class="pricing-dot h-2 w-2 rounded-full bg-white/20 hover:bg-white/40 transition-all"></button>
+        <button type="button" data-slide="2" aria-label="Тариф 3" class="pricing-dot h-2 w-2 rounded-full bg-white/20 hover:bg-white/40 transition-all"></button>
+        <button type="button" data-slide="3" aria-label="Тариф 4" class="pricing-dot h-2 w-2 rounded-full bg-white/20 hover:bg-white/40 transition-all"></button>
+        <button type="button" data-slide="4" aria-label="Акция 5" class="pricing-dot h-2 w-2 rounded-full bg-white/20 hover:bg-white/40 transition-all"></button>
+      </div>
+    </section>
+
     <!-- Секция Контакты (прямые ссылки без формы сообщений) -->
     <section id="contact" class="reveal-section py-12 sm:py-16">
       <div class="mb-8 text-center">
@@ -531,6 +833,7 @@
           <li><a href="#home" class="hover:text-[#F4F1EC] transition-colors" data-i18n="nav_home">Главная</a></li>
           <li><a href="#about" class="hover:text-[#F4F1EC] transition-colors" data-i18n="nav_about">Обо мне</a></li>
           <li><a href="#portfolio" class="hover:text-[#F4F1EC] transition-colors" data-i18n="nav_portfolio">Портфолио</a></li>
+          <li><a href="#pricing" class="hover:text-[#F4F1EC] transition-colors" data-i18n="nav_pricing">Прайс</a></li>
           <li><a href="#contact" class="hover:text-[#F4F1EC] transition-colors" data-i18n="nav_contact">Контакты</a></li>
         </ul>
       </div>
@@ -620,7 +923,8 @@
     // 2. Локализация RU / EN
     const i18n = {
       ru: {
-        nav_home: 'Главная', nav_about: 'Обо мне', nav_portfolio: 'Портфолио', nav_contact: 'Контакты',
+        nav_home: 'Главная', nav_about: 'Обо мне', nav_portfolio: 'Портфолио', nav_pricing: 'Прайс', nav_contact: 'Контакты',
+        pricing_eyebrow: 'СТОИМОСТЬ РАБОТЫ', pricing_title: 'Прайс', pricing_sub: 'Понятные форматы разработки под ключ. Точная стоимость фиксируется после короткого обсуждения задачи.',
         hero_status: 'Открыт к новым проектам',
         hero_welcome: 'Добро пожаловать', hero_portfolio: 'в моё портфолио',
         hero_desc: 'Создаю быстрые сайты под ключ, интерактивные лендинги, Telegram-ботов и моушн-графику. Объединяю чистый код, современную типографику и живой 3D-веб без лишнего визуального шума.',
@@ -639,7 +943,8 @@
         footer_tagline: 'Чистый код, выверенная типографика и интерактивный 3D-веб.', footer_nav: 'НАВИГАЦИЯ', footer_connect: 'СВЯЗЬ', back_top: 'Наверх'
       },
       en: {
-        nav_home: 'Home', nav_about: 'About', nav_portfolio: 'Portfolio', nav_contact: 'Contact',
+        nav_home: 'Home', nav_about: 'About', nav_portfolio: 'Portfolio', nav_pricing: 'Pricing', nav_contact: 'Contact',
+        pricing_eyebrow: 'RATES', pricing_title: 'Pricing', pricing_sub: 'Clear turnkey formats. Exact pricing is fixed after a quick project brief.',
         hero_status: 'Available for new projects',
         hero_welcome: 'Welcome to', hero_portfolio: 'My Portfolio',
         hero_desc: 'I build fast turnkey websites, interactive landing pages, Telegram bots, and motion graphics — combining clean code, sharp typography, and tactile 3D web.',
@@ -1970,22 +2275,75 @@
       });
     });
 
-    // Подсветка активной секции при прокрутке
-    const sections = ['home', 'about', 'portfolio', 'contact'];
+    // Жидкий «капельный» переход активного пункта меню при клике и прокрутке
+    const sections = ['home', 'about', 'portfolio', 'pricing', 'contact'];
+    const navDropLead = document.getElementById('nav-drop-lead');
+    const navDropTrail = document.getElementById('nav-drop-trail');
+    let activeNavId = 'home';
+    let navClickLockUntil = 0;
+
+    function moveNavDroplet(id, instant = false) {
+      const targetPill = document.querySelector(`.nav-pill[data-nav="${id}"]`);
+      if (!targetPill || !navDropLead || !navDropTrail) return;
+      activeNavId = id;
+
+      document.querySelectorAll('.nav-pill').forEach(pill => {
+        const active = pill.dataset.nav === id;
+        pill.classList.toggle('text-[#0E0E11]', active);
+        pill.classList.toggle('font-semibold', active);
+        pill.classList.toggle('text-[#A8A39B]', !active);
+        pill.classList.toggle('font-medium', !active);
+      });
+
+      const left = targetPill.offsetLeft;
+      const width = targetPill.offsetWidth;
+
+      if (instant) {
+        navDropLead.style.transition = 'none';
+        navDropTrail.style.transition = 'none';
+      } else {
+        navDropLead.style.transition = '';
+        navDropTrail.style.transition = '';
+      }
+
+      // Ведущая капля уходит первой, хвостовая с задержкой — фильтр gooey сливает их в перетекающую каплю
+      navDropLead.style.width = width + 'px';
+      navDropLead.style.transform = `translateX(${left}px)`;
+
+      if (instant) {
+        navDropTrail.style.width = width + 'px';
+        navDropTrail.style.transform = `translateX(${left}px)`;
+      } else {
+        requestAnimationFrame(() => {
+          navDropTrail.style.width = width + 'px';
+          navDropTrail.style.transform = `translateX(${left}px)`;
+        });
+      }
+    }
+
+    document.querySelectorAll('.nav-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        navClickLockUntil = performance.now() + 700;
+        moveNavDroplet(pill.dataset.nav, false);
+      });
+    });
+
     window.addEventListener('scroll', () => {
-      const y = window.scrollY + 140;
+      if (performance.now() < navClickLockUntil) return;
+      const y = window.scrollY + 180;
       let current = 'home';
       sections.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.offsetTop <= y) current = id;
       });
-      document.querySelectorAll('.nav-pill').forEach(pill => {
-        const active = pill.dataset.nav === current;
-        pill.classList.toggle('bg-[#F4F1EC]', active);
-        pill.classList.toggle('text-[#0E0E11]', active);
-        pill.classList.toggle('text-[#A8A39B]', !active);
-      });
+      if (current !== activeNavId) moveNavDroplet(current, false);
     }, { passive: true });
+
+    window.addEventListener('resize', () => moveNavDroplet(activeNavId, true));
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      requestAnimationFrame(() => moveNavDroplet(activeNavId, true));
+    });
+    requestAnimationFrame(() => moveNavDroplet('home', true));
 
     // Переворот мобильной карточки по нажатию (сзади: фото на фоне + QR-код Telegram на переднем плане)
     (function initMobileFlipCard() {
@@ -2036,6 +2394,113 @@
         }
       });
       drawQr();
+    })();
+
+    // GPU-карусель прайса (плавный translate3d 60fps + живой touch-свайп без лагов)
+    (function initPricingCarousel() {
+      const viewport = document.getElementById('pricing-viewport');
+      const track = document.getElementById('pricing-track');
+      const prevBtn = document.getElementById('pricing-prev');
+      const nextBtn = document.getElementById('pricing-next');
+      const counter = document.getElementById('pricing-counter');
+      const dots = Array.from(document.querySelectorAll('.pricing-dot'));
+      const slides = Array.from(document.querySelectorAll('.pricing-slide'));
+      if (!viewport || !track || !slides.length) return;
+
+      let currentIdx = 0;
+
+      function getVisibleCount() {
+        const vw = viewport.clientWidth || window.innerWidth;
+        const slideW = slides[0].offsetWidth || vw;
+        return Math.max(1, Math.min(slides.length, Math.round(vw / slideW)));
+      }
+
+      function getMaxIdx() {
+        return Math.max(0, slides.length - getVisibleCount());
+      }
+
+      function getOffsetFor(idx) {
+        const maxScroll = Math.max(0, track.scrollWidth - viewport.clientWidth);
+        const target = slides[idx] ? slides[idx].offsetLeft : 0;
+        return Math.min(target, maxScroll);
+      }
+
+      function applyTransform(px, animate = true) {
+        track.style.transition = animate ? 'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+        track.style.transform = `translate3d(${-px}px, 0, 0)`;
+      }
+
+      function goToSlide(idx, animate = true) {
+        const maxIdx = getMaxIdx();
+        const totalPages = maxIdx + 1;
+        currentIdx = Math.max(0, Math.min(maxIdx, idx));
+
+        applyTransform(getOffsetFor(currentIdx), animate);
+
+        if (counter) counter.textContent = `0${currentIdx + 1} / 0${totalPages}`;
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('hidden', i > maxIdx);
+          const active = i === currentIdx;
+          dot.classList.toggle('w-6', active);
+          dot.classList.toggle('bg-[#D8B48A]', active);
+          dot.classList.toggle('w-2', !active);
+          dot.classList.toggle('bg-white/20', !active);
+        });
+        if (prevBtn) prevBtn.disabled = currentIdx === 0;
+        if (nextBtn) nextBtn.disabled = currentIdx >= maxIdx;
+      }
+
+      if (prevBtn) prevBtn.addEventListener('click', () => goToSlide(currentIdx - 1, true));
+      if (nextBtn) nextBtn.addEventListener('click', () => goToSlide(currentIdx + 1, true));
+      dots.forEach((dot, i) => dot.addEventListener('click', () => goToSlide(i, true)));
+
+      // Плавный touch-свайп без блокировки вертикального скролла
+      let touchStartX = 0, touchStartY = 0, baseOffset = 0;
+      let isSwiping = false, swipeLocked = null;
+
+      viewport.addEventListener('touchstart', (e) => {
+        if (!e.touches.length) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        baseOffset = getOffsetFor(currentIdx);
+        isSwiping = true;
+        swipeLocked = null;
+      }, { passive: true });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (!isSwiping || !e.touches.length) return;
+        const dx = e.touches[0].clientX - touchStartX;
+        const dy = e.touches[0].clientY - touchStartY;
+
+        if (swipeLocked === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+          swipeLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        }
+        if (swipeLocked !== 'x') return;
+
+        const maxScroll = Math.max(0, track.scrollWidth - viewport.clientWidth);
+        let nextOffset = baseOffset - dx;
+        // Мягкое сопротивление на краях
+        if (nextOffset < 0) nextOffset *= 0.28;
+        else if (nextOffset > maxScroll) nextOffset = maxScroll + (nextOffset - maxScroll) * 0.28;
+        applyTransform(nextOffset, false);
+      }, { passive: true });
+
+      function endSwipe(e) {
+        if (!isSwiping) return;
+        isSwiping = false;
+        if (swipeLocked !== 'x') return;
+        const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
+        const dx = endX - touchStartX;
+        if (dx < -45) goToSlide(currentIdx + 1, true);
+        else if (dx > 45) goToSlide(currentIdx - 1, true);
+        else goToSlide(currentIdx, true);
+      }
+
+      viewport.addEventListener('touchend', endSwipe, { passive: true });
+      viewport.addEventListener('touchcancel', endSwipe, { passive: true });
+
+      window.addEventListener('resize', () => goToSlide(currentIdx, false));
+      requestAnimationFrame(() => goToSlide(0, false));
     })();
 
     if (window.lucide) lucide.createIcons();
