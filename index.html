@@ -1355,31 +1355,82 @@
         document.fonts.ready.then(() => {
           drawFrontCard(userPhoto);
           drawBackCard(qrHoldPhoto);
+          drawStrapTexture();
         });
       }
 
-      // Текстура тканевой ленты
+      // Реалистичная текстура тканевой стропы (нейлоновое плетение, объёмные кромки, прострочка и чёткий принт)
       const strapCanvas = document.createElement('canvas');
       strapCanvas.width = 512;
       strapCanvas.height = 2048;
-      const sctx = strapCanvas.getContext('2d');
-      sctx.fillStyle = '#1C1C22';
-      sctx.fillRect(0, 0, 512, 2048);
-      sctx.fillStyle = 'rgba(244,241,236,0.035)';
-      for (let y = 0; y < 2048; y += 8) sctx.fillRect(0, y, 512, 2);
-      sctx.save();
-      sctx.translate(256, 1024);
-      sctx.rotate(-Math.PI / 2);
-      sctx.fillStyle = '#D8B48A';
-      sctx.font = '600 40px "JetBrains Mono", monospace';
-      sctx.textAlign = 'center';
-      sctx.fillText('МАКСИМ  |  ВЕБ-РАЗРАБОТЧИК   •   МАКСИМ  |  ПОРТФОЛИО', 0, 14);
-      sctx.restore();
       const strapTex = new THREE.CanvasTexture(strapCanvas);
       strapTex.wrapS = THREE.ClampToEdgeWrapping;
       strapTex.wrapT = THREE.RepeatWrapping;
+      strapTex.repeat.set(1, 2.2);
       strapTex.anisotropy = maxAniso;
+      strapTex.minFilter = THREE.LinearMipmapLinearFilter;
+      strapTex.magFilter = THREE.LinearFilter;
       strapTex.encoding = THREE.sRGBEncoding;
+
+      function drawStrapTexture() {
+        const sctx = strapCanvas.getContext('2d');
+        const W = 512, H = 2048;
+
+        // Объёмный градиент поперёк ленты (лёгкое затемнение у кромок создаёт реальную толщину ткани)
+        const baseGrad = sctx.createLinearGradient(0, 0, W, 0);
+        baseGrad.addColorStop(0, '#0D0D11');
+        baseGrad.addColorStop(0.08, '#1C1C22');
+        baseGrad.addColorStop(0.5, '#25252C');
+        baseGrad.addColorStop(0.92, '#1C1C22');
+        baseGrad.addColorStop(1, '#0D0D11');
+        sctx.fillStyle = baseGrad;
+        sctx.fillRect(0, 0, W, H);
+
+        // Мелкий поперечный рубчик нейлоновой стропы (как у настоящих ланьярдов)
+        for (let y = 0; y < H; y += 6) {
+          sctx.fillStyle = (y % 12 === 0) ? 'rgba(255, 255, 255, 0.045)' : 'rgba(0, 0, 0, 0.16)';
+          sctx.fillRect(0, y, W, 2);
+        }
+
+        // Тонкая диагональная саржевая фактура
+        sctx.strokeStyle = 'rgba(244, 241, 236, 0.025)';
+        sctx.lineWidth = 2;
+        for (let y = -W; y < H + W; y += 22) {
+          sctx.beginPath();
+          sctx.moveTo(0, y);
+          sctx.lineTo(W, y + W * 0.35);
+          sctx.stroke();
+        }
+
+        // Декоративная прострочка вдоль левого и правого края стропы
+        sctx.strokeStyle = 'rgba(216, 180, 138, 0.38)';
+        sctx.lineWidth = 4;
+        sctx.setLineDash([18, 14]);
+        sctx.beginPath();
+        sctx.moveTo(32, 0); sctx.lineTo(32, H);
+        sctx.moveTo(W - 32, 0); sctx.lineTo(W - 32, H);
+        sctx.stroke();
+        sctx.setLineDash([]);
+
+        // Тонкий тканевый кант по самым краям
+        sctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        sctx.fillRect(0, 0, 8, H);
+        sctx.fillRect(W - 8, 0, 8, H);
+
+        // Чёткий, правильно ориентированный (не отзеркаленный) брендированный принт вдоль стропы
+        sctx.save();
+        sctx.translate(W / 2, H / 2);
+        sctx.rotate(Math.PI / 2);
+        sctx.textAlign = 'center';
+        sctx.textBaseline = 'middle';
+        sctx.fillStyle = '#D8B48A';
+        sctx.font = '700 54px "JetBrains Mono", monospace';
+        sctx.fillText('M1LWARE   •   МАКСИМ   •   M1LWARE   •   МАКСИМ', 0, 0);
+        sctx.restore();
+
+        strapTex.needsUpdate = true;
+      }
+      drawStrapTexture();
 
       function createRoundedCardGeo(w, h, r, depth) {
         const shape = new THREE.Shape();
@@ -1413,17 +1464,40 @@
       const cardPivot = new THREE.Group();
       badgeRoot.add(cardPivot);
 
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0xb5ada1, metalness: 0.85, roughness: 0.24 });
-      const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.16, 0.09), metalMat);
-      clamp.position.y = 0.08;
-      cardPivot.add(clamp);
+      // Отдельный узел зажима-карабина на конце стропы (не переворачивается на 180° вместе с карточкой, чтобы стропа не проходила сквозь карту)
+      const claspGroup = new THREE.Group();
+      badgeRoot.add(claspGroup);
 
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.022, 16, 32), metalMat);
-      ring.position.y = -0.02;
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xc2b9ac, metalness: 0.88, roughness: 0.2 });
+      const darkLeatherMat = new THREE.MeshStandardMaterial({ color: 0x18181e, roughness: 0.65, metalness: 0.1 });
+
+      // Плотная складка-фиксатор стропы с металлической заклёпкой
+      const strapSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.24, 0.095), darkLeatherMat);
+      strapSleeve.position.y = 0.26;
+      claspGroup.add(strapSleeve);
+
+      const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.115, 20), metalMat);
+      rivet.rotation.x = Math.PI / 2;
+      rivet.position.y = 0.26;
+      claspGroup.add(rivet);
+
+      // Металлический зажим-карабин и вертлюг
+      const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.13, 0.105), metalMat);
+      clamp.position.y = 0.11;
+      claspGroup.add(clamp);
+
+      const swivel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.12, 16), metalMat);
+      swivel.position.y = 0.02;
+      claspGroup.add(swivel);
+
+      // Кольцо крепления на самой карточке (вращается вместе с бейджем ниже зажима)
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.022, 16, 32), metalMat);
+      ring.position.y = -0.05;
       cardPivot.add(ring);
 
+      // Карточка висит чуть ниже вертлюга — при перевороте на 180° зажим и стропа гарантированно выше карточки
       const cardOffset = new THREE.Group();
-      cardOffset.position.y = -(cardH / 2 + 0.04);
+      cardOffset.position.y = -(cardH / 2 + 0.11);
       cardPivot.add(cardOffset);
 
       const cardBody = new THREE.Mesh(
@@ -1510,20 +1584,22 @@
         const rect = anchorEl.getBoundingClientRect();
         const isMobile = window.innerWidth < 1024;
         const cx = rect.left + rect.width / 2;
-        // На десктопе лента уходит вверх за экран; на телефоне крепится ровно вверху своего блока, не перекрывая кнопки Hero
-        const topY = isMobile ? (rect.top + 4) : (rect.top - 115);
-
         const vFov = (camera.fov * Math.PI) / 180;
         const visibleH = 2 * Math.tan(vFov / 2) * camera.position.z;
         const visibleW = visibleH * camera.aspect;
 
         const worldAnchorH = (rect.height / window.innerHeight) * visibleH;
         const maxScaleByW = (visibleW * (isMobile ? 0.68 : 0.42)) / cardW;
-        const maxScaleByH = worldAnchorH / (isMobile ? 4.45 : 4.45);
-
+        const maxScaleByH = worldAnchorH / 4.45;
         sceneScale = Math.max(0.68, Math.min(isMobile ? 1.05 : 1.24, Math.min(maxScaleByW, maxScaleByH)));
-        currentStrapLen = (isMobile ? 1.15 : 2.65) * sceneScale;
-        return screenToWorld(cx, topY, 0);
+
+        // Верхняя точка стропы всегда далеко выше верхнего края экрана (y = -220px), чтобы начала стропы никогда не было видно!
+        const topY = Math.min(rect.top - 240, -220);
+        const cardTopScreenY = rect.top + rect.height * 0.28;
+        const topWorld = screenToWorld(cx, topY, 0);
+        const restCardWorld = screenToWorld(cx, cardTopScreenY, 0);
+        currentStrapLen = Math.max(2.6 * sceneScale, topWorld.y - restCardWorld.y);
+        return topWorld;
       }
 
       getAnchorWorld();
@@ -1688,10 +1764,20 @@
       const p0 = new THREE.Vector3(0, 0, 0);
       const curvePts = [p0, midPos, cardPos];
 
+      const ribbonEndPos = new THREE.Vector3();
+      const ribbonMidCtrl = new THREE.Vector3();
+
       function updateRibbonGeometry() {
-        const curve = new THREE.QuadraticBezierCurve3(p0, midPos, cardPos);
+        // Конец стропы строго входит в верхнюю часть металлического зажима (выше карточки и вертлюга)
+        const clampOffsetY = 0.24 * sceneScale;
+        const clampOffsetX = -Math.sin(cardRoll) * clampOffsetY;
+        const clampOffsetYRot = Math.cos(cardRoll) * clampOffsetY;
+        ribbonEndPos.set(cardPos.x + clampOffsetX, cardPos.y + clampOffsetYRot, cardPos.z);
+        ribbonMidCtrl.copy(midPos);
+
+        const curve = new THREE.QuadraticBezierCurve3(p0, ribbonMidCtrl, ribbonEndPos);
         const pts = curve.getPoints(RIBBON_SEGMENTS);
-        const halfW = (RIBBON_WIDTH * sceneScale) / 2;
+        const halfW = (0.44 * sceneScale) / 2;
         const posArr = ribbonGeo.attributes.position.array;
 
         for (let i = 0; i <= RIBBON_SEGMENTS; i++) {
@@ -1700,18 +1786,18 @@
           const next = pts[Math.min(RIBBON_SEGMENTS, i + 1)];
           const tangent = new THREE.Vector3().subVectors(next, prev).normalize();
           const viewDir = new THREE.Vector3(0, 0, 1);
-          const side = new THREE.Vector3().crossVectors(viewDir, tangent);
+          const side = new THREE.Vector3().crossVectors(tangent, viewDir);
           if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
           else side.normalize();
 
-          // Естественное скручивание ленты пропорционально повороту карточки
-          const factor = Math.pow(i / RIBBON_SEGMENTS, 1.4);
-          const twistAngle = factor * Math.sin(cardYaw) * 0.48;
+          // Небольшое, реалистичное покачивание ткани (без прохождения сквозь карточку при перевороте)
+          const factor = Math.pow(i / RIBBON_SEGMENTS, 1.6);
+          const twistAngle = factor * Math.sin(cardYaw) * 0.16;
           const cosT = Math.cos(twistAngle);
           const sinT = Math.sin(twistAngle);
           const sx = side.x * cosT;
           const sy = side.y * cosT;
-          const sz = sinT;
+          const sz = sinT * 0.25;
 
           const idx = i * 6;
           posArr[idx + 0] = p.x - sx * halfW;
@@ -1856,6 +1942,11 @@
           midVel.set(0, 0, 0);
           cardRoll = velRoll = cardPitch = velPitch = velYaw = 0;
         }
+
+        // Зажим-карабин на конце стропы повторяет наклон ленты, а карточка свободно крутится на вертлюге ниже него
+        claspGroup.position.copy(cardPos);
+        claspGroup.scale.setScalar(sceneScale);
+        claspGroup.rotation.set(cardPitch * 0.35, Math.sin(cardYaw) * 0.16, cardRoll);
 
         cardPivot.position.copy(cardPos);
         cardPivot.scale.setScalar(sceneScale);
